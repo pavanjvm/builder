@@ -3,7 +3,7 @@ import express from "express";
 import { OpenAI } from "openai";
 import { basePrompt as nodeBasePrompt}  from "./defaults/node.js"
 import { basePrompt as reactBasePrompt}  from "./defaults/react.js"
-import {BASE_PROMPT} from "./prompts.js"
+import {BASE_PROMPT, getSystemPrompt} from "./prompts.js"
 const client = new OpenAI();
 import cors from "cors";
 
@@ -48,11 +48,17 @@ app.post("/template",async(req,res) => {
 
 })
 
+type Message = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
 app.post("/chat",async(req,res) => {
-    const message =  req.body.message;
+    const messages: Message[] = [{role:"system", content: getSystemPrompt()}]
+    messages.push({role:"user",content : req.body.message})
     const response =  await client.responses.create({
         model : "gpt-5",
-        input : message
+        input : messages
     })
     console.log(response.output_text)
     res.json({
@@ -60,5 +66,7 @@ app.post("/chat",async(req,res) => {
     });
 
 })
+
+
  app.listen(PORT)
 
